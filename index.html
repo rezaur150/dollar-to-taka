@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="bn">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Dollar ⇄ Taka Converter — Simple Payment Summary</title>
+  <style>
+    :root{--bg:#0f1724;--card:#0b1220;--muted:#9aa4b2;--accent:#06b6d4;--glass:rgba(255,255,255,0.03)}
+    html,body{height:100%;margin:0;font-family:Inter,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:linear-gradient(180deg,#071029 0%, #0b1220 100%);color:#e6eef6}
+    .wrap{max-width:820px;margin:40px auto;padding:28px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:12px;box-shadow:0 8px 30px rgba(2,6,23,0.7)}
+    h1{margin:0 0 8px;font-size:20px}
+    p.lead{margin:0 0 20px;color:var(--muted)}
+
+    .grid{display:grid;grid-template-columns:1fr 320px;gap:20px}
+    .card{background:var(--card);padding:18px;border-radius:10px}
+    label{display:block;font-size:13px;color:var(--muted);margin-bottom:8px}
+    select,input[type=number]{width:100%;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:var(--glass);color:inherit;font-size:15px}
+    .row{display:flex;gap:10px}
+    .btn{display:inline-block;padding:10px 14px;border-radius:8px;border:0;background:var(--accent);color:#012;cursor:pointer;font-weight:600}
+    .muted{color:var(--muted);font-size:13px}
+    .big{font-size:28px;font-weight:700}
+    .summary{margin-top:14px;background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00));padding:12px;border-radius:8px}
+    .payment-details{font-size:14px;line-height:1.6}
+    .copy{margin-top:10px}
+    footer{margin-top:18px;color:var(--muted);font-size:13px}
+    .hint{font-size:13px;color:var(--muted);margin-top:8px}
+    @media (max-width:840px){.grid{grid-template-columns:1fr;}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Dollar → Taka Converter & Payment Summary</h1>
+    <p class="lead">রেট সিলেক্ট করুন, ডলারের পরিমাণ দিন — নিচে অটোমেটিক হিসাব ও পেমেন্ট ডিটেইলস দেখাবে।</p>
+
+    <div class="grid">
+      <div class="card">
+        <label>Exchange Rate (৳ per $)</label>
+        <select id="rateSelect" aria-label="exchange rate">
+          <option value="140">140</option>
+          <option value="145">145</option>
+          <option value="150">150</option>
+        </select>
+
+        <div style="height:12px"></div>
+
+        <label>Dollar Amount (USD)</label>
+        <input id="dollars" type="number" min="0" step="0.01" value="6" />
+
+        <div style="height:12px"></div>
+
+        <div class="row">
+          <button id="convertBtn" class="btn">Convert</button>
+          <button id="clearBtn" class="btn" style="background:#2b3440;color:#e6eef6">Clear</button>
+        </div>
+
+        <div class="hint">উদাহরণ: <strong>Payment 6 dollar → 840 taka (rate 140)</strong></div>
+
+        <div class="summary" id="summary">
+          <div class="muted">Summary</div>
+          <div style="height:8px"></div>
+          <div class="payment-details">
+            <div>Rate: <span id="outRate">140</span> ৳ / $</div>
+            <div>Dollar: <span id="outDollar">6.00</span> $</div>
+            <div class="big">Total: <span id="outTaka">840.00</span> ৳</div>
+          </div>
+
+          <div class="copy">
+            <button id="copyBtn" class="btn">Copy Payment Info</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="muted">Payment Instructions</div>
+        <div style="height:10px"></div>
+
+        <div style="margin-top:8px" class="payment-details">
+          <div id="paymentLine" style="font-size:16px;font-weight:700;margin-bottom:8px">Payment 6 dollar = 840 taka</div>
+          <div><strong>Bkash:</strong> 01842702810</div>
+          <div><strong>Nagad:</strong> 01609-635319</div>
+        </div>
+
+        <div style="height:12px"></div>
+        <div class="muted">Notes</div>
+        <ul style="color:var(--muted);font-size:14px;line-height:1.6">
+          <li>রেট পরিবর্তন করে নতুন হিসাব দেখুন।</li>
+          <li>ডলারের অংশভাগ হলে কোরেকশন স্বয়ংক্রিয়ভাবে 2 দশমিক পর্যন্ত দেখাবে।</li>
+        </ul>
+
+        <div style="height:12px"></div>
+        <div class="muted">Quick actions</div>
+        <div style="height:8px"></div>
+        <div class="row">
+          <button id="payBkash" class="btn">Pay with Bkash</button>
+          <button id="payNagad" class="btn">Pay with Nagad</button>
+        </div>
+
+      </div>
+    </div>
+
+    <footer>Made with ❤️ — যদি চান আমি এই ফাইলটি আপনি ডাউনলোড করার জন্য একটা link বানিয়ে দিতে পারি।</footer>
+  </div>
+
+  <script>
+    const rateSelect = document.getElementById('rateSelect');
+    const dollarsInput = document.getElementById('dollars');
+    const outRate = document.getElementById('outRate');
+    const outDollar = document.getElementById('outDollar');
+    const outTaka = document.getElementById('outTaka');
+    const convertBtn = document.getElementById('convertBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const copyBtn = document.getElementById('copyBtn');
+    const payBkash = document.getElementById('payBkash');
+    const payNagad = document.getElementById('payNagad');
+
+    function formatNumber(n){
+      return Number(n).toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
+    }
+
+    function calculate(){
+      const rate = parseFloat(rateSelect.value) || 0;
+      let dollars = parseFloat(dollarsInput.value);
+      if (isNaN(dollars)) dollars = 0;
+      const taka = dollars * rate;
+
+      outRate.textContent = rate.toFixed(0);
+      outDollar.textContent = formatNumber(dollars);
+      outTaka.textContent = formatNumber(taka);
+
+      // Update payment line dynamically
+      const paymentLineEl = document.getElementById('paymentLine');
+      if(paymentLineEl){
+        const dollarsText = Number.isInteger(dollars) ? dollars.toString() : dollars.toFixed(2);
+        paymentLineEl.textContent = `Payment ${dollarsText} dollar = ${formatNumber(taka)} taka`;
+      }
+
+      return {rate,dollars,taka};
+    }
+
+    convertBtn.addEventListener('click', ()=> calculate());
+    rateSelect.addEventListener('change', ()=> calculate());
+    dollarsInput.addEventListener('input', ()=> calculate());
+
+    clearBtn.addEventListener('click', ()=>{
+      dollarsInput.value = '';
+      calculate();
+    });
+
+    copyBtn.addEventListener('click', ()=>{
+      const {rate,dollars,taka} = calculate();
+      const text = `Rate: ${rate} ৳/$.\nDollar: ${dollars} $.\nTotal: ${taka.toFixed(2)} ৳\n\nBkash: 01842702810\nNagad: 01609-635319`;
+      navigator.clipboard.writeText(text).then(()=>{
+        alert('Payment info copied to clipboard');
+      }).catch(()=>{
+        alert('Cannot copy — please select and copy manually:\n\n' + text);
+      });
+    });
+
+    payBkash.addEventListener('click', ()=>{
+      const {taka} = calculate();
+      alert('Send ' + taka.toFixed(2) + ' ৳ to Bkash: 01842702810');
+    });
+    payNagad.addEventListener('click', ()=>{
+      const {taka} = calculate();
+      alert('Send ' + taka.toFixed(2) + ' ৳ to Nagad: 01609-635319');
+    });
+
+    calculate();
+  </script>
+</body>
+</html>
