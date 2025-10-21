@@ -19,15 +19,24 @@
     .danger{background:#ef4444;color:white}
   </style>
 </head>
-<body>
-
-  <button class="btn" onclick="window.location.href='index.html'">
-  Go to home
-</button>
-  
-  <div class="wrap">
+<body> 
+ <div class="wrap">
   <h1>💱 ডলার কনভার্টার</h1>
-  
+<!-- ডলার কনভার্টারের বাটনের নিচে বা যেখানে চাইছো সেখানে -->
+<div style="margin-top:12px">
+  <button class="btn" onclick="goHome()">🏠 হোম পেজে যান</button>
+</div>
+
+<script>
+function goHome(){
+  // index.html ফাইলে যাবে
+  window.location.href = 'index.html';
+}
+</script>
+
+
+
+    
   <label>ডলার পরিমাণ (USD)</label>
   <input id="usdAmount" type="number" value="1" step="0.01">
   
@@ -168,4 +177,5 @@ renderHistory()
 </script>
 </body>
 </html>
+
 
