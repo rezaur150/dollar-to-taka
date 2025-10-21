@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="bn">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Shoikot Tools Hub — Dollar Converter</title>
+  <style>
+    body{font-family:system-ui, sans-serif;background:#f6f7fb;margin:0;color:#0f172a}
+    .wrap{max-width:600px;margin:20px auto;padding:16px;background:#fff;border-radius:12px;box-shadow:0 6px 18px rgba(12,15,30,0.06)}
+    h1{font-size:20px;margin-bottom:12px}
+    label{display:block;margin-top:10px;font-size:13px;color:#556}
+    input{width:100%;padding:8px;border-radius:8px;border:1px solid #e6e9ef;font-size:14px}
+    .btn{margin-top:12px;padding:10px 16px;background:#0ea5a4;color:#fff;border:none;border-radius:8px;cursor:pointer}
+    .btn.ghost{background:transparent;border:1px solid #e6e9ef;color:#556;margin-left:6px}
+    .card{margin-top:12px;padding:12px;background:#fefefe;border-radius:10px;box-shadow:0 3px 10px rgba(12,15,30,0.05)}
+    table{width:100%;border-collapse:collapse;margin-top:8px}
+    th,td{border-bottom:1px solid #eef2f6;padding:6px;text-align:left;font-size:13px}
+    .small{font-size:12px;padding:4px 6px;border-radius:6px;cursor:pointer}
+    .danger{background:#ef4444;color:white}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <h1>💱 ডলার কনভার্টার</h1>
+  
+  <label>ডলার পরিমাণ (USD)</label>
+  <input id="usdAmount" type="number" value="1" step="0.01">
+  
+  <label>আপনি কত টাকা খরচ করে কিনেছেন (BDT)</label>
+  <input id="totalBDT" type="number" value="130" step="0.01">
+  
+  <label>বিক্রির রেট (BDT প্রতি USD) — আপনি যেটা বিক্রি করবেন</label>
+  <input id="sellRate" type="number" value="140" step="0.01">
+  
+  <label>ফি (%) (আপনার convenience/transfer fee)</label>
+  <input id="feePct" type="number" value="0" step="0.1">
+  
+  <div style="margin-top:10px">
+    <button class="btn" id="calcBtn">হিসাব করুন</button>
+    <button class="btn ghost" id="saveBtn">History-তে Save করুন</button>
+    <button class="btn ghost" id="clearHistory">History Clear করুন</button>
+    <button class="btn" onclick="goHome()">🏠 হোম পেজে যান</button>
+  </div>
+  
+  <div class="card">
+    <div><strong>আপনার ক্রয় রেট (BDT প্রতি USD):</strong> <span id="buyRate">0</span></div>
+    <div><strong>মোট টাকা (BDT):</strong> <span id="grossBDT">0</span></div>
+    <div><strong>ফি বাদে নেট (BDT):</strong> <span id="netBDT">0</span></div>
+    <div><strong>লাভ (BDT):</strong> <span id="profitBDT">0</span></div>
+    <div><strong>লাভ %:</strong> <span id="profitPct">0%</span></div>
+  </div>
+  
+  <div class="card">
+    <h3 style="margin:6px 0">History</h3>
+    <div style="overflow:auto;max-height:200px">
+      <table id="historyTable">
+        <thead>
+          <tr>
+            <th>USD</th>
+            <th>BDT খরচ</th>
+            <th>Sell Rate</th>
+            <th>Fee %</th>
+            <th>Net BDT</th>
+            <th>Profit BDT</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+const usdEl = document.getElementById('usdAmount')
+const bdtEl = document.getElementById('totalBDT')
+const sellEl = document.getElementById('sellRate')
+const feeEl = document.getElementById('feePct')
+const buyRateEl = document.getElementById('buyRate')
+const grossEl = document.getElementById('grossBDT')
+const netEl = document.getElementById('netBDT')
+const profitEl = document.getElementById('profitBDT')
+const profitPctEl = document.getElementById('profitPct')
+const saveBtn = document.getElementById('saveBtn')
+const clearBtn = document.getElementById('clearHistory')
+const historyTable = document.querySelector('#historyTable tbody')
+
+let history = JSON.parse(localStorage.getItem('convHistory')||'[]')
+
+function formatNum(n){return Number(n||0).toLocaleString('en-US',{maximumFractionDigits:2})}
+
+function calculate(){
+  const usd = parseFloat(usdEl.value||0)
+  const totalBDT = parseFloat(bdtEl.value||0)
+  const sell = parseFloat(sellEl.value||0)
+  const feePct = parseFloat(feeEl.value||0)
+  
+  const buyRate = usd ? totalBDT / usd : 0
+  buyRateEl.textContent = formatNum(buyRate)
+  
+  const gross = usd * sell
+  const feeAmount = gross * (feePct/100)
+  const net = gross - feeAmount
+  const profit = net - totalBDT
+  const profitPct = totalBDT ? (profit / totalBDT * 100) : 0
+  
+  grossEl.textContent = formatNum(gross)
+  netEl.textContent = formatNum(net)
+  profitEl.textContent = formatNum(profit)
+  profitPctEl.textContent = profitPct.toFixed(2) + '%'
+  
+  return {usd,totalBDT,sell,feePct,net,profit}
+}
+
+function renderHistory(){
+  historyTable.innerHTML=''
+  history.forEach((h,index)=>{
+    const tr = document.createElement('tr')
+    tr.innerHTML = `
+      <td>${h.usd}</td>
+      <td>${formatNum(h.totalBDT)}</td>
+      <td>${formatNum(h.sell)}</td>
+      <td>${h.feePct}</td>
+      <td>${formatNum(h.net)}</td>
+      <td>${formatNum(h.profit)}</td>
+      <td>
+        <button class="small btn" onclick="useHistory(${index})">Use</button>
+        <button class="small btn danger" onclick="deleteHistory(${index})">Del</button>
+      </td>
+    `
+    historyTable.appendChild(tr)
+  })
+}
+
+function saveHistory(){
+  const data = calculate()
+  history.unshift(data)
+  localStorage.setItem('convHistory', JSON.stringify(history))
+  renderHistory()
+  alert('Saved to history')
+}
+
+function useHistory(i){
+  const h = history[i]
+  usdEl.value=h.usd
+  bdtEl.value=h.totalBDT
+  sellEl.value=h.sell
+  feeEl.value=h.feePct
+  calculate()
+}
+
+function deleteHistory(i){
+  if(!confirm('Delete this entry?')) return
+  history.splice(i,1)
+  localStorage.setItem('convHistory', JSON.stringify(history))
+  renderHistory()
+}
+
+function goHome(){
+  window.location.href = 'index.html'
+}
+
+saveBtn.addEventListener('click', saveHistory)
+clearBtn.addEventListener('click', ()=>{if(confirm('Clear all history?')){history=[];localStorage.setItem('convHistory','[]');renderHistory()}})
+
+document.getElementById('calcBtn').addEventListener('click', calculate)
+renderHistory()
+</script>
+</body>
+</html>
